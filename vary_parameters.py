@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+import numpy as np
+import datetime
+
+l1_init = list(np.linspace(start=0.01,stop=0.99,num=15))
+l2_init = list(np.linspace(start=0.01,stop=0.99,num=15))
+
+v_stay = [0.75]
+v_group = 1.0
+v_alone = 0.5
+
+n_per_deme = [2,10,50];
+
+date = datetime.datetime.now()
+base_name = "sim_leaving_game_" +\
+        f"{date:%d}_{date:%m}_{date:%Y}_{date:%H}{date:%M}{date:%S}"
+
+ctr=0
+
+exe = "./leaving_game.exe"
+for l1_init_i in l1_init:
+    for l2_init_i in l2_init:
+        for v_stay_i in v_stay:
+            for n_per_deme_i in n_per_deme:
+                ctr+=1
+                print(f"{exe} " + \
+                        f"{v_stay_i} " + \
+                        f"{v_group} " + \
+                        f"{v_alone} " + \
+                        f"{l1_init_i} " + \
+                        f"{l2_init_i} " + \
+                        f"{n_per_deme_i} " + \
+                        base_name + f"{ctr}"
+                    ) 
+
+
+            
