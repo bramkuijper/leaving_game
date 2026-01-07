@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import sys
-import pandas as pd
-
+from pandas import Series, DataFrame, concat
 import warnings
 
 
@@ -57,7 +56,7 @@ class LeavingGame:
 
             # data frame to bookkeep outcomes for 
             # all the different types of mutants that invaded
-            invasion_outcomes_df = pd.DataFrame(
+            invasion_outcomes_df = DataFrame(
                     {
                         "l1l2" : [ 0.0 for i in range(0,total_number_mutants) ],
                         "L1l2" : [ 0.0 for i in range(0,total_number_mutants) ],
@@ -186,12 +185,12 @@ class LeavingGame:
 
             # select for each row which allele has won out
             invasion_winners = subinvasion.apply(
-                    lambda s,n: pd.Series(s.nlargest(n).index), axis=1, n=1)
+                    lambda s,n: Series(s.nlargest(n).index), axis=1, n=1)
 
             # add this invasion winners column back to the original data frame
             # that contains the eventual genotype frequencies of all the genotypes
             # after successful invasion
-            invasion_outcomes_df = pd.concat(
+            invasion_outcomes_df = concat(
                     [invasion_winners,invasion_outcomes_df],axis=1)
 
             # which of all the mutations are the successful ones
@@ -228,7 +227,6 @@ double_mutant = bool(sys.argv[7])
 file = sys.argv[8]
 
 contents = "valone;vgroup;vstay;m;double;l1_init;l2_init_i;l1;l2\n"
-
 sim = LeavingGame(parameters = {"valone" : valone,
                                 "vgroup" : vgroup,
                                 "vstay" : vstay,
