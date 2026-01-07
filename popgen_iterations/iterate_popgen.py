@@ -151,6 +151,9 @@ class LeavingGame:
                     for g_idx in range(0,4):
                         g[g_idx] = gtplus1[g_idx]
 
+                # for this mutant, store the eventual genotype frequencies
+                # the time of invasion and which allele was invaded
+                # eventually the fasted invasion will be chosen here
                 invasion_outcomes_df.iloc[
                         invasion_type,list(range(0,6))] = g + [invasion_time, invasion_type]
                 # end for invasion time
@@ -160,12 +163,20 @@ class LeavingGame:
             # ok now find the largest value in the genotype 
             # frequency columns to see which genotype wins
             subinvasion = invasion_outcomes_df.iloc[:,range(0,4)]
+
+            # select for each row which allele has won out
             invasion_winners = subinvasion.apply(
                     lambda s,n: pd.Series(s.nlargest(n).index), axis=1, n=1)
+
+            # add this invasion winners column back to the original data frame
+            # that contains the eventual genotype frequencies of all the genotypes
+            # after successful invasion
             invasion_outcomes_df = pd.concat(
                     [invasion_winners,invasion_outcomes_df],axis=1)
 
-            # which of all the mutations are the successful 
+            # which of all the mutations are the successful ones
+            print(invasion_outcomes_df)
+            sys.exit(1)
             invasion_outcomes_df_only_mutant\
                     = invasion_outcomes_df.loc[invasion_outcomes_df.iloc[:,0] != "l1l2"]
 

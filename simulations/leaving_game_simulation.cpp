@@ -61,6 +61,7 @@ struct Group {
 
 std::vector <Group> population{};
 
+// initialize the population parameters
 void init_population(int argc, char **argv)
 {
     v_stay = std::stod(argv[1]);
@@ -160,8 +161,13 @@ void depart_vs_stay()
         n_departed[0] = 0;
         n_departed[1] = 0;
 
+        assert(population[group_idx].members.size() == n_per_deme);
+
         for (unsigned member_idx{0}; member_idx < n_per_deme; ++member_idx)
         {
+            population[group_idx].members[member_idx].departed[0] = false;
+            population[group_idx].members[member_idx].departed[1] = false;
+
             // individual leaves during t1
             if (uniform(rng_r) < 
                     population[group_idx].members[member_idx].l[0])
@@ -175,7 +181,7 @@ void depart_vs_stay()
                 ++n_stay[0];
 
                 // individual stays during t = 0
-                // will it also stay during t = 1
+                // will it also stay during t = 1?
                 if (uniform(rng_r) < 
                         population[group_idx].members[member_idx].l[1])
                 {
@@ -255,8 +261,13 @@ void create_kid(Individual const &mom, Individual &kid)
     mutate(kid.l[1]);
 }
 
+// reproduce where we assume hard selection
+// e.g., fitnesses of all individuals across all groups
+// are all put in a single sampling distribution
+// and parents are then sampled from there
 void reproduce()
 {
+    // initialize a fitness sampler
     std::discrete_distribution <unsigned> fitness_sampler(
             fitnesses.begin(),
             fitnesses.end()
@@ -268,6 +279,7 @@ void reproduce()
 
     for (unsigned group_idx{0}; group_idx < n_groups; ++group_idx)
     {
+        // clear any juveniles from the previous generation
         population[group_idx].juveniles.clear();
 
         for (unsigned member_idx{0}; member_idx < n_per_deme; ++member_idx)
