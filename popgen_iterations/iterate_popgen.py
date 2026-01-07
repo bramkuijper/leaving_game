@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import sys
 import pandas as pd
-import numpy as np
 
 import warnings
 
@@ -29,29 +28,49 @@ class LeavingGame:
         l1 = self.parameters["l1_init"]
         l2 = self.parameters["l2_init"]
 
-        for time in range(0, self.parameters["max_time"]):
-            
-            mutant_increment = [ 
-                                [ self.parameters["mutant_size"], 0 ],
-                                [ -self.parameters["mutant_size"], 0],
-                                [ 0, self.parameters["mutant_size"]],
-                                [ 0, -self.parameters["mutant_size"]]
+        mutant_types = [ 
+                            [ self.parameters["mutant_size"], 0 ], # higher l1, unchanged l2
+                            [ -self.parameters["mutant_size"], 0], # lower l1, unchanged l2
+                            [ 0, self.parameters["mutant_size"]], # unchanged l1, higher l2
+                            [ 0, -self.parameters["mutant_size"]] # unchanged l2, higher l2
+                            ]
+
+        if self.parameters["double_mutant"]:
+
+            mutant_types2 = [
+                                [ self.parameters["mutant_size"],self.parameters["mutant_size"]], # higher l1, higher l2
+                                [ -self.parameters["mutant_size"],self.parameters["mutant_size"]], # lower l1, higher l2
+                                [ self.parameters["mutant_size"],-self.parameters["mutant_size"]], # higher l1, lower l2
+                                [ -self.parameters["mutant_size"],-self.parameters["mutant_size"]] # lower l1, lower l2
                                 ]
 
+            mutant_types = mutant_types + mutant_types2
+
+
+        # now iterate over time and perform successive invasions
+        # of different types
+        for time in range(0, self.parameters["max_time"]):
+            
             invasion_genotype_wins = None
 
+            total_number_mutants = len(mutant_types)
+
+            # data frame to bookkeep outcomes for 
+            # all the different types of mutants that invaded
             invasion_outcomes_df = pd.DataFrame(
                     {
-                        "l1l2" : [ 0.0 for i in range(0,4) ],
-                        "L1l2" : [ 0.0 for i in range(0,4) ],
-                        "l1L2" : [ 0.0 for i in range(0,4) ],
-                        "L1L2" : [ 0.0 for i in range(0,4) ],
-                        "maxt" : [ 0 for i in range(0,4) ],
-                        "invasion_type" : [ 0 for i in range(0,4) ]
+                        "l1l2" : [ 0.0 for i in range(0,total_number_mutants) ],
+                        "L1l2" : [ 0.0 for i in range(0,total_number_mutants) ],
+                        "l1L2" : [ 0.0 for i in range(0,total_number_mutants) ],
+                        "L1L2" : [ 0.0 for i in range(0,total_number_mutants) ],
+                        "maxt" : [ 0 for i in range(0,total_number_mutants) ],
+                        "invasion_type" : [ 0 for i in range(0,total_number_mutants) ]
                     }
             )
 
-            for invasion_type in list(range(0,4)):
+            # go over all the different types of mutants and see
+            # what happens
+            for mutant_type_idx in range(0,total_number_mutants):
 
                 g = [ 0.0, 0.0, 0.0, 0.0 ]
                 gtplus1 = [ 0.0, 0.0, 0.0, 0.0 ]
@@ -72,8 +91,8 @@ class LeavingGame:
                 # phenotypes for this type of mutant
                 l1 = l1
                 l2 = l2
-                L1 = self.clamp(l1 + mutant_increment[invasion_type][0],0.0,1.0)
-                L2 = self.clamp(l2 + mutant_increment[invasion_type][1],0.0,1.0)
+                L1 = self.clamp(l1 + mutant_types[mutant_type_idx][0],0.0,1.0)
+                L2 = self.clamp(l2 + mutant_types[mutant_type_idx][1],0.0,1.0)
 
 
 
@@ -155,7 +174,8 @@ class LeavingGame:
                 # the time of invasion and which allele was invaded
                 # eventually the fasted invasion will be chosen here
                 invasion_outcomes_df.iloc[
-                        invasion_type,list(range(0,6))] = g + [invasion_time, invasion_type]
+                        mutant_type_idx,list(range(0,6))] = g +\
+                                [invasion_time, mutant_type_idx]
                 # end for invasion time
 
             # end for invasion type
@@ -175,19 +195,21 @@ class LeavingGame:
                     [invasion_winners,invasion_outcomes_df],axis=1)
 
             # which of all the mutations are the successful ones
-            print(invasion_outcomes_df)
-            sys.exit(1)
+            # check if any of the non-mutant types is able to successfully invade
+            # we can do so by filtering out the cases in which the resident won
             invasion_outcomes_df_only_mutant\
                     = invasion_outcomes_df.loc[invasion_outcomes_df.iloc[:,0] != "l1l2"]
 
             if invasion_outcomes_df_only_mutant.shape[0] < 1:
+                # this condition would apply if the resident won in all cases
+                # in which case we can stop the iteration
                 break
 
             # finally then the winner, the one that fixes fastest
             invasion_winner = invasion_outcomes_df_only_mutant.loc[
                     invasion_outcomes_df_only_mutant["maxt"] == min(invasion_outcomes_df_only_mutant["maxt"]),"invasion_type"]
 
-            selected_increment = mutant_increment[invasion_winner.values[0]]
+            selected_increment = mutant_types[invasion_winner.values[0]]
 
             # finally update the values based on this successful mutant
             l1 = self.clamp(l1 + selected_increment[0],0,1)
@@ -197,27 +219,33 @@ class LeavingGame:
         return [l1,l2]
 
 l1_init = float(sys.argv[1])
-m = float(sys.argv[2])
+l2_init = float(sys.argv[2])
+m = float(sys.argv[3])
+valone = float(sys.argv[4])
+vgroup = float(sys.argv[5])
+vstay = float(sys.argv[6])
+double_mutant = bool(sys.argv[7])
+file = sys.argv[8]
 
-valone=0.4
-vgroup=1.0
-vstay=0.9
+contents = "valone;vgroup;vstay;m;double;l1_init;l2_init_i;l1;l2\n"
 
-print("valone;vgroup;vstay;m;l1_init;l2_init_i;l1;l2")
+sim = LeavingGame(parameters = {"valone" : valone,
+                                "vgroup" : vgroup,
+                                "vstay" : vstay,
+                                "m" : m,
+                                "max_time" : 10000,
+                                "max_invasion_time" : 10000,
+                                "mutant_size" : 0.01,
+                                "mutant_start_frequency" : 0.01,
+                                "double_mutant" : double_mutant,
+                                "l1_init" : l1_init,
+                                "l2_init" : l2_init})
 
-#for l2_init_i in list(np.linspace(0.01,0.99,num=100)):
-for l2_init_i in [0.5]:
-    sim = LeavingGame(parameters = {"valone" : valone,
-                                    "vgroup" : vgroup,
-                                    "vstay" : vstay,
-                                    "m" : m,
-                                    "max_time" : 10000,
-                                    "max_invasion_time" : 10000,
-                                    "mutant_size" : 0.01,
-                                    "mutant_start_frequency" : 0.01,
-                                    "l1_init" : l1_init,
-                                    "l2_init" : l2_init_i})
+vals = sim.run()
 
-    vals = sim.run()
+contents += f"{valone};{vgroup};{vstay};{m};{double_mutant};{l1_init};{l2_init};{vals[0]};{vals[1]}\n"
 
-    print(f"{valone};{vgroup};{vstay};{m};{l1_init};{l2_init_i};{vals[0]};{vals[1]}")
+with open(file,"w") as f:
+    f.write(contents)
+
+
