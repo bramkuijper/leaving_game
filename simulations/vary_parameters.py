@@ -3,10 +3,10 @@
 import numpy as np
 import datetime
 
-l1_init = list(np.linspace(start=0.01,stop=0.99,num=15))
+l1_init = list(np.linspace(start=0.01,stop=0.99,num=100))
 l2_init = list(np.linspace(start=0.01,stop=0.99,num=15))
 
-v_stay = [0.75]
+v_stay = [0.75,0.5,0.1,0.9]
 v_group = 1.0
 v_alone = 0.5
 
@@ -18,13 +18,20 @@ base_name = "sim_leaving_game_" +\
 
 ctr=0
 
-exe = "./leaving_game.exe"
+type = "unconditional"
+
+if type == "unconditional":
+    l2_init = [""]
+
+exe = {"conditional" : "./leaving_game.exe",\
+        "unconditional" : "./leaving_game_unconditional.exe"}
+
 for l1_init_i in l1_init:
     for l2_init_i in l2_init:
         for v_stay_i in v_stay:
             for n_per_deme_i in n_per_deme:
                 ctr+=1
-                print(f"{exe} " + \
+                print(f"{exe[type]} " + \
                         f"{v_stay_i} " + \
                         f"{v_group} " + \
                         f"{v_alone} " + \
