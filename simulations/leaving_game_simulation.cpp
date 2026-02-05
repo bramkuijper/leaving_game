@@ -136,7 +136,7 @@ void write_parameters(std::ofstream &data_file)
     data_file << std::endl << std::endl
         << "seed;" << seed << std::endl
         << "v_stay;" << v_stay << std::endl
-        << "v_alone;" << v_stay << std::endl
+        << "v_alone;" << v_alone << std::endl
         << "l1_init;" << l1_init << std::endl
         << "l2_init;" << l2_init << std::endl
         << "n_per_deme;" << n_per_deme << std::endl
