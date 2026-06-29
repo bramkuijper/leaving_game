@@ -203,6 +203,7 @@ void depart_vs_stay()
             } // end if 1.0 - pr_stay
             else // individual stays
             {
+                ++n_stay[0];
                 ++n_stay[1];
             }
         } // end for member_idx
