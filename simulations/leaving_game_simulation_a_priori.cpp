@@ -95,7 +95,7 @@ void init_population(int argc, char **argv)
 void write_data_headers(std::ofstream &data_file)
 {
 // write header to data file
-    data_file << "generation;meanl;varl;mean_stay1;mean_stay2;" << std::endl;
+    data_file << "generation;meanl;varl;mean_stay;var_stay;nstay0;nstay1;" << std::endl;
 }
     
 
